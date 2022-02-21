@@ -1,0 +1,116 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+generator nestjsdto {
+  provider                        = "prisma-generator-nestjs-dto"
+  output                          = "../src/api/structure/"
+  reExport                        = "false"
+  exportRelationModifierClasses   = "true"
+  createDtoPrefix                 = "Create"
+  entityPrefix                    = ""
+  entitySuffix                    = ""
+  updateDtoPrefix                 = "Update"
+  outputToNestJsResourceStructure = "true"
+  fileNamingStyle                 = "camel"
+  dtoSuffix                       = "Dto"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Comment {
+  id           String    @id @db.VarChar(255)
+  author       String?   @db.Char(1)
+  content      String?   @db.Text
+  created_time DateTime? @db.DateTime(0)
+  updated_time DateTime? @db.DateTime(0)
+  author_id    Int
+  post_id      Int
+  User         User      @relation(fields: [author_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_User_TO_Comment_1")
+  Post         Post      @relation(fields: [post_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_Post_TO_Comment_1")
+
+  @@index([post_id], map: "FK_Post_TO_Comment_1")
+  @@index([author_id], map: "FK_User_TO_Comment_1")
+}
+
+model File {
+  id      Int    @id
+  file    Bytes? @db.Blob
+  post_id Int
+  Post    Post   @relation(fields: [post_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_Post_TO_File_1")
+
+  @@index([post_id], map: "FK_Post_TO_File_1")
+}
+
+model Follow {
+  id                          Int  @id
+  follower                    Int
+  following                   Int
+  User_Follow_followerToUser  User @relation("Follow_followerToUser", fields: [follower], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_User_TO_Follow_1")
+  User_Follow_followingToUser User @relation("Follow_followingToUser", fields: [following], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_User_TO_Follow_2")
+
+  @@index([follower], map: "FK_User_TO_Follow_1")
+  @@index([following], map: "FK_User_TO_Follow_2")
+}
+
+model Like {
+  id      Int  @id
+  post_id Int
+  user_id Int
+  Post    Post @relation(fields: [post_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_Post_TO_Like_1")
+  User    User @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_User_TO_Like_1")
+
+  @@index([post_id], map: "FK_Post_TO_Like_1")
+  @@index([user_id], map: "FK_User_TO_Like_1")
+}
+
+model Post {
+  id                Int       @id
+  author            String?   @db.Char(1)
+  content           String?   @db.Text
+  created_time      DateTime? @db.DateTime(0)
+  updated_time      DateTime? @db.DateTime(0)
+  author_id         Int
+  location          String?   @db.Char(1)
+  comment_available Boolean?
+  User              User      @relation(fields: [author_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_User_TO_Post_1")
+  Comment           Comment[]
+  File              File[]
+  Like              Like[]
+
+  @@index([author_id], map: "FK_User_TO_Post_1")
+}
+
+model Profile {
+  id           Int       @id
+  image        Bytes?    @db.Blob
+  info         String?   @db.Text
+  website      String?   @db.Char(1)
+  profile_name String?   @db.Char(1)
+  user_id      Int
+  gender       String?   @db.Char(1)
+  birth_date   DateTime? @db.Date
+  User         User      @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_User_TO_Profile_1")
+
+  @@index([user_id], map: "FK_User_TO_Profile_1")
+}
+
+model User {
+  id                            Int       @id
+  username                      String?   @db.Char(1)
+  nickname                      String?   @db.Char(1)
+  is_professional               Boolean?
+  is_private                    Boolean?
+  phone_num                     String?   @db.Char(1)
+  email                         String?   @db.Char(1)
+  password                      String?   @db.Char(1)
+  Comment                       Comment[]
+  Follow_Follow_followerToUser  Follow[]  @relation("Follow_followerToUser")
+  Follow_Follow_followingToUser Follow[]  @relation("Follow_followingToUser")
+  Like                          Like[]
+  Post                          Post[]
+  Profile                       Profile[]
+}
